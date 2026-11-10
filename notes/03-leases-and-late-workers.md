@@ -50,14 +50,16 @@ which deduplicates on a stable idempotency key.
 
 It is worth being precise here because "exactly once" is so often claimed. No queue can promise
 exactly-once delivery across a network. What can be built is at-least-once delivery plus an
-idempotent receiver, and that is enough.
+idempotent receiver, and that is enough on one condition: the receiver records the idempotency key
+in the same transaction as the effect. If the effect and the record can be separated by a crash,
+a redelivery repeats the effect.
 
 ## Checkpoints
 
 A retried attempt that starts from zero repeats work, and for agents that work costs money and may
 have had side effects. Persisting a checkpoint after each meaningful step lets the next attempt
-resume. The steps before the checkpoint must themselves be idempotent or already recorded, since
-the crash can land between doing a step and recording it.
+resume. The step after the last checkpoint must itself be idempotent, since the crash can land
+between doing a step and recording it, and that step will run again.
 
 ## Tradeoffs
 

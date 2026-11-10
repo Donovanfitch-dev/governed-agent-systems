@@ -21,7 +21,7 @@ until a decision exists, and executes only what was approved.
 ```mermaid
 stateDiagram-v2
     [*] --> Proposed
-    Proposed --> Denied: policy forbids
+    Proposed --> Rejected: policy forbids
     Proposed --> Approved: policy allows without review
     Proposed --> Pending: policy requires review
     Pending --> Approved: reviewer approves
@@ -31,7 +31,6 @@ stateDiagram-v2
     Executing --> Executed
     Executing --> Failed
     Failed --> Executing: retry, same idempotency key
-    Denied --> [*]
     Rejected --> [*]
     Expired --> [*]
     Executed --> [*]
@@ -48,7 +47,8 @@ What this buys:
 - **Pending things expire.** An approval given to a stale proposal is an approval of something
   that may no longer be true.
 - **Execution is idempotent.** A double click, a retry or a redelivered message performs the
-  effect once, keyed on the proposal.
+  effect once per idempotency key, provided the executor (or the system it calls) deduplicates on
+  that key. A crash between claiming the execution and finishing it still needs reconciliation.
 
 ## Policy decides how much review
 
